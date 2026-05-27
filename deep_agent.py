@@ -117,10 +117,10 @@ def print_result(agent_result: str) -> None:
         print(type(message))
         print('-----------------------------------------------------------------------------')
         
-        if type(message) == HumanMessage:
+        if isinstance(message, HumanMessage):
             print(message.content)
             
-        elif type(message) == AIMessage:
+        elif isinstance(message, AIMessage):
             if message.content:
                 for content in message.content: 
                     if content['type']:
@@ -143,7 +143,7 @@ def print_result(agent_result: str) -> None:
             if message.usage_metadata:
                 print("Usage metadata: " + str(message.usage_metadata) + "\n")
                 
-        elif type(message) == ToolMessage:
+        elif isinstance(message, ToolMessage):
             if message.name:
                 print(f"Name: {message.name}\n")
                 

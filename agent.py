@@ -19,7 +19,7 @@ result = agent.invoke(
         "messages": [
             { 
                 "role": "user", 
-                "content": "What is the wweather in Canberra?"
+                "content": "What is the weather in Canberra?"
             }
         ]
     }
