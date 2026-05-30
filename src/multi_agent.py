@@ -32,10 +32,10 @@ Expected outcome:
 """
 
 import pprint
-import uuid
 
 from datetime import datetime
 from dotenv import load_dotenv
+from langchain_core.utils.uuid import uuid7
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.agents import create_agent
 from langchain.agents.middleware import HumanInTheLoopMiddleware
@@ -49,7 +49,7 @@ model = ChatGoogleGenerativeAI(model="gemini-2.5-flash-lite")
 
 config = {
     "configurable": {
-        "thread_id": str(uuid.uuid4())
+        "thread_id": str(uuid7())
     }
 }
     
@@ -110,11 +110,11 @@ def get_current_and_relative_date() -> str:
 CALENDAR_AGENT_PROMPT = (
     "You are a calendar scheduling assistant. "
     "Parse natural language scheduling requests (e.g., 'next Tuesday at 2pm') "
+    "Use get_current_and_relative_date to get the current or relative date. "
     "into proper ISO datetime formats. "
     "Use get_available_time_slots to check availability when needed. "
     "If there is no suitable time slot, stop and confirm unavailability in your response. "
     "Use create_calendar_event to schedule events. "
-    "Use get_current_and_relative_date to get the current or relative date. "
     "Always confirm what was scheduled in your final response."
 )
 
@@ -231,7 +231,10 @@ def schedule_event(
 
 
 @tool
-def manage_email(request: str) -> str:
+def manage_email(
+    request: str,
+    runtime: ToolRuntime
+) -> str:
     """Send emails using natural language.
 
         Use this when the user wants to send notifications, reminders, or any email
@@ -241,8 +244,21 @@ def manage_email(request: str) -> str:
         Input: Natural language email request (e.g., 'send them a reminder about
         the meeting')
     """
+    
+    # Pass additional conversational context to sub-agents
+    original_user_message = next(
+        message for message in runtime.state["messages"] if message.type == "human"
+    )
+    
+    prompt = (
+        "You are assisting with the following user inquiry:"
+        f"{original_user_message.text}"
+        "You are tasked with the following sub-request:"
+        f"{request}"
+    )
+    
     result = email_agent.invoke({
-        "messages": [{"role": "user", "content": request}]
+        "messages": [{"role": "user", "content": prompt}]
     })
     return result["messages"][-1].text
 

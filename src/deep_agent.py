@@ -17,7 +17,7 @@ How it works:
     4. Invokes the deep agent with a prompt that asks it to fetch a test file,
        count lines matching a substring, find the first occurrence of another
        substring, and produce a synopsis.
-    5. Uses a unique thread_id per run (via uuid4) so memory does not carry over
+    5. Uses a unique thread_id per run (via uuid7) so memory does not carry over
        between executions.
 
 Expected outcome:
@@ -29,9 +29,9 @@ Expected outcome:
 
 import urllib.error
 import urllib.request
-import uuid
 
 from deepagents import create_deep_agent
+from langchain_core.utils.uuid import uuid7
 from langchain.agents import create_agent
 from langchain.chat_models import init_chat_model
 from langchain_core.messages.ai import AIMessage
@@ -190,7 +190,7 @@ agent_result = agent.invoke(
     },
     config = {
         "configurable": {
-            "thread_id": str(uuid.uuid4())
+            "thread_id": str(uuid7())
         }
     }
 )
@@ -212,7 +212,7 @@ print_result(agent_result)
 #     },
 #     config = {
 #         "configurable": {
-#             "thread_id": str(uuid.uuid4())
+#             "thread_id": str(uuid7())
 #         }
 #     }
 # )
