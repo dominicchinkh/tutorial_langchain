@@ -55,7 +55,7 @@ from langchain_core.utils.uuid import uuid7
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.agents import create_agent, AgentState
 from langchain.agents.middleware import wrap_model_call, ModelRequest, ModelResponse
-from langchain.messages import HumanMessage, ToolMessage
+from langchain.messages import AIMessage, HumanMessage, ToolMessage
 from langchain.tools import tool, ToolRuntime
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.types import Command, StateSnapshot
@@ -134,6 +134,16 @@ def provide_solution(solution: str) -> str:
     """Provide a solution to the customer's issue."""
     return f"Solution provided: {solution}"
 
+@tool
+def go_back_to_warranty() -> Command:
+    """Go back to warranty verification step."""
+    return Command(update={"current_step": "warranty_collector"})
+
+@tool
+def go_back_to_classification() -> Command:
+    """Go back to issue classification step."""
+    return Command(update={"current_step": "issue_classifier"})
+
 #----------------------------
 # Define step configurations
 
@@ -178,6 +188,10 @@ RESOLUTION_SPECIALIST_PROMPT = """
     - If IN WARRANTY: explain warranty repair process using provide_solution
     - If OUT OF WARRANTY: escalate_to_human for paid repair options
 
+    If the customer indicates any information was wrong, use:
+    - go_back_to_warranty to correct warranty status
+    - go_back_to_classification to correct issue type
+
     Be specific and helpful in your solutions.
 """
 
@@ -202,7 +216,12 @@ STEP_CONFIG = {
     },
     "resolution_specialist": {
         "prompt": RESOLUTION_SPECIALIST_PROMPT,
-        "tools": [escalate_to_human, provide_solution],
+        "tools": [
+            escalate_to_human, 
+            provide_solution, 
+            go_back_to_warranty, 
+            go_back_to_classification
+        ],
         "requires": ["warranty_status", "issue_type"]
     }
 }
@@ -247,7 +266,9 @@ all_tools = [
     record_warranty_status,
     record_issue_type,
     escalate_to_human,
-    provide_solution
+    provide_solution,
+    go_back_to_warranty, 
+    go_back_to_classification
 ]
 
 # Create the agent with step-based configuration
@@ -266,10 +287,23 @@ agent = create_agent(
 #-------------------
 # Test the workflow
 
-def print_status(current_state: StateSnapshot, messages: dict):
-    """Print messages and agent current state"""
-    for msg in messages:
-        msg.pretty_print()
+def print_message(result) -> None:
+    """Print messages"""
+    for chunk in result:
+        message = chunk["messages"][-1]
+        
+        if message.content:
+            if isinstance(message, HumanMessage):
+                print(f"User: {message.content}")
+                
+            elif isinstance(message, AIMessage):
+                print(f"Agent: {message.content}")
+                
+        elif message.tool_calls:
+            print(f"Calling tools: {[tc['name'] for tc in message.tool_calls]}")
+
+def print_current_state(current_state: StateSnapshot) -> None:
+    """Print agent current state"""
 
     # Fetch the actual live state from the checkpointer
     print(f"\nCurrent step: {current_state.values.get('current_step')}")
@@ -286,52 +320,60 @@ config = {
 
 # Turn 1: Initial message - starts with warranty_collector step
 print("=== Turn 1: Warranty Collection ===")
-result = agent.invoke(
+result = agent.stream(
     {
         "messages": [HumanMessage(
             "Hi, my phone screen is cracked"
         )]
     }, 
-    config
+    config=config,
+    stream_mode="values"
 )
 
-# print_status(agent.get_state(config), result["messages"])
+print_message(result)
+print_current_state(agent.get_state(config))
 
 # Turn 2: User responds about warranty
 print("\n=== Turn 2: Warranty Response ===")
-result = agent.invoke(
+result = agent.stream(
     {
         "messages": [
             HumanMessage("Yes, it's still under warranty")
         ]
     },
-    config
+    config=config,
+    stream_mode="values"
 )
 
-# print_status(agent.get_state(config), result["messages"])
+print_message(result)
+print_current_state(agent.get_state(config))
 
 # Turn 3: User describes the issue
 print("\n=== Turn 3: Issue Description ===")
-result = agent.invoke(
+result = agent.stream(
     {
         "messages": [
             HumanMessage("The screen is physically cracked from dropping it")
         ]
     },
-    config
+    config=config,
+    stream_mode="values"
 )
 
-# print_status(agent.get_state(config), result["messages"])
+print_message(result)
+print_current_state(agent.get_state(config))
 
 # Turn 4: Resolution
 print("\n=== Turn 4: Resolution ===")
-result = agent.invoke(
+result = agent.stream(
     {
         "messages": [
             HumanMessage("What should I do?")
         ]
     },
-    config
+    config=config,
+    stream_mode="values"
 )
 
-print_status(agent.get_state(config), result["messages"])
+print_message(result)
+print_current_state(agent.get_state(config))
