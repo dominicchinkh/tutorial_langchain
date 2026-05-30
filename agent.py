@@ -1,3 +1,23 @@
+"""
+agent.py — Basic LangChain Agent with a Tool
+
+What it does:
+    Demonstrates how to create a simple LangChain agent that can use a custom tool
+    (get_weather) to answer user questions.
+
+How it works:
+    1. Loads environment variables (e.g. API keys) from a .env file.
+    2. Defines a `get_weather` tool that returns a hardcoded sunny forecast.
+    3. Creates a LangChain agent using the Gemini 2.5 Flash Lite model, wired up
+       with the tool and a basic system prompt.
+    4. Invokes the agent with a user message asking about the weather in Canberra.
+
+Expected outcome:
+    The agent calls the `get_weather` tool and prints a response indicating
+    "It's always sunny in Canberra!" (or a natural-language answer incorporating
+    that tool result).
+"""
+
 from dotenv import load_dotenv
 from langchain.agents import create_agent
 

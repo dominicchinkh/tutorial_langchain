@@ -1,3 +1,29 @@
+"""
+chat_model.py — LangChain Chat Model with Messages and Tool Binding
+
+What it does:
+    Demonstrates how to initialise a LangChain chat model, send a multi-turn
+    conversation (including multi-modal content), and bind a tool for function
+    calling.
+
+How it works:
+    1. Loads environment variables from a .env file.
+    2. Initializes a Gemini 2.5 Flash Lite chat model with configurable
+       temperature, max tokens, timeout, and retry settings.
+    3. Constructs a conversation with a SystemMessage (persona), prior messages,
+       and a multi-modal HumanMessage containing both text and an image URL.
+    4. Invokes the model and prints the AI response.
+    5. Defines a `get_weather` function, binds it as a tool to the model, then
+       invokes the model with a weather query. The model returns a tool_call
+       which is executed locally to retrieve the answer.
+
+Expected outcome:
+    - First invocation: prints the model's conversational reply (as a 5-year-old
+      girl persona) to "What is LLM?" with image context.
+    - Second invocation: prints the weather result for Sydney ("raining") by
+      executing the tool call returned by the model.
+"""
+
 from dotenv import load_dotenv
 from langchain.chat_models import init_chat_model
 from langchain.messages import AIMessage, HumanMessage, SystemMessage
@@ -36,7 +62,7 @@ messages = [
     AIMessage("How can I help you?"),
 
     # User input and interactions. They can contain text, images, audio, 
-    # files, and any other amount of multimodal content
+    # files, and any other amount of multi-modal content
     HumanMessage(
         content=[
             {"type": "text",  "text": "What is LLM?"},

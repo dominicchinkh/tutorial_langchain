@@ -1,3 +1,32 @@
+"""
+deep_agent.py — Deep Agent with URL Fetching and Memory
+
+What it does:
+    Creates a "deep agent" (multi-step, tool-using agent with sub-agent
+    capabilities) that can fetch text from a URL, analyse the content, and
+    answer structured questions about it.
+
+How it works:
+    1. Defines a `fetch_text_from_url` tool that downloads a document from a
+       given URL and returns its text (truncated to 10,000 characters if too
+       large).
+    2. Configures a Gemini model and sets up an InMemorySaver checkpointer for
+       conversation memory.
+    3. Creates both a standard LangChain agent and a deep agent with the same
+       tool and system prompt.
+    4. Invokes the deep agent with a prompt that asks it to fetch a test file,
+       count lines matching a substring, find the first occurrence of another
+       substring, and produce a synopsis.
+    5. Uses a unique thread_id per run (via uuid4) so memory does not carry over
+       between executions.
+
+Expected outcome:
+    The agent fetches the remote text file, analyses its content using the tool
+    results, and prints a structured answer with line counts, line numbers, and
+    a two-sentence synopsis. If verification is not possible, it returns null
+    for that field with an explanation.
+"""
+
 import urllib.error
 import urllib.request
 import uuid
