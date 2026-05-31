@@ -1,7 +1,7 @@
 """
 Customer Support Workflow Automation Agent
 
-WHAT THIS PROGRAM DOES:
+What it does:
     This program implements a multi-stage, stateful customer support agent 
     designed to guide a user through a structured device troubleshooting 
     and resolution funnel. It systematically transitions the interaction 
@@ -10,7 +10,7 @@ WHAT THIS PROGRAM DOES:
         2. Issue Classification ('issue_classifier')
         3. Resolution/Escalation ('resolution_specialist')
 
-HOW IT DOES IT:
+How it works:
     The application utilizes LangChain and LangGraph primitives to manage 
     dynamic prompts, tools, and execution state across separate conversation turns:
     
@@ -29,7 +29,7 @@ HOW IT DOES IT:
       to a unique `thread_id` (`state_schema=SupportState`) so that state variables 
       persist seamlessly across individual `.invoke()` calls.
 
-EXPECTED OUTCOME:
+Expected outcome:
     When executed, the program runs an end-to-end multi-turn simulation mimicking 
     a user reporting a cracked phone screen:
     
