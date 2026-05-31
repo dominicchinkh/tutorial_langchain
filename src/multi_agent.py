@@ -126,6 +126,15 @@ calendar_agent = create_agent(
         # Permit all response types (approve, edit, reject)
         HumanInTheLoopMiddleware(
             interrupt_on = {"create_calendar_event": True},
+            
+            # interrupt_on = {"create_calendar_event": False}, # No interrupts needed
+            
+            # interrupt_on = {
+            #   "create_calendar_event": {
+            #       "allowed_decisions": ["approve", "reject"], # No editing
+            #   }
+            # }
+            
             description_prefix = "Calendar event pending approval" 
         )
     ]

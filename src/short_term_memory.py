@@ -1,3 +1,49 @@
+"""
+LangGraph Agent with Dynamic State Management and Memory Summarization.
+
+What it does:
+    This script initializes an autonomous agent configured with permanent thread
+    checkpointing (`InMemorySaver`), state-bound variables (`CustomAgentState`), 
+    and automated window summarization. The agent is designed to dynamically capture 
+    the user's name during natural conversation, save it out-of-band inside the 
+    graph checkpoint state via tool calls, and automatically enforce a structural 
+    linguistic constraint requiring the model to address the user by name once 
+    it has been captured.
+
+How it works:
+    1. State Management: Extends the baseline `AgentState` into a `CustomAgentState` 
+       containing an explicit `user_name` string property. This property is tracked 
+       and persisted across individual graph invocations using the `InMemorySaver` 
+       keyed to a specific `thread_id`.
+    
+    2. State Interception (Dynamic Prompting): Registers a `@dynamic_prompt` 
+       interceptor (`dynamic_system_prompt`) inside the agent's middleware chain. 
+       On every inference pass, it inspects the state schema. If a `user_name` exists, 
+       it modifies the system instruction set in real-time to append a strict directive: 
+       "You must address the user as [Name] at least once in every response."
+    
+    3. Context Truncation & Compression: Utilizes LangChain's `SummarizationMiddleware`. 
+       When the conversation history reaches 5 messages, the oldest messages are 
+       automatically compressed by a background LLM process into a single Markdown-structured 
+       summary block (`## SUMMARY`), prepended as a `HumanMessage` at index 0. 
+       The raw history window is safely managed via a `keep=10` history buffer.
+
+EXPECTED OUTCOME:
+    - Turn 1: The user introduces themselves ("Hi! my name is Bob."). The agent detects 
+      this, triggers the `update_user_name` tool, updates the state, and responds normally.
+      
+    - Turn 2 & 3: The user shifts topics (asking for poems about cats/dogs). The message 
+      counter crosses 5, triggering summarization. Bob's name is saved inside the text summary 
+      markdown block while raw old turns are cleaned.
+      
+    - Turn 4 & 5: The user asks "What is my name?". Despite the original introduction 
+      being truncated out of the immediate message buffer, the agent reads its active 
+      state context and the text summary, responding confidently with "Bob".
+      
+    - Output Profile: The final history log contains a structured summary `HumanMessage` 
+      at the top and a series of balanced conversational text turns.
+    
+"""
 import inspect
 
 from dotenv import load_dotenv
