@@ -116,7 +116,6 @@ def main():
             print("Stopping sandbox...")
             sandbox.stop()
             print("Sandbox stopped successfully.")
-    
 
 if __name__ == '__main__':
     main()
