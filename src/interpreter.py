@@ -29,9 +29,12 @@ Expected Outcome:
 """
 import asyncio
 
+from dotenv import load_dotenv
 from deepagents import create_deep_agent
 from langchain_core.tools import tool
 from langchain_quickjs import CodeInterpreterMiddleware
+
+load_dotenv()
 
 # 1. Define a real tool that the agent can actually use
 @tool
