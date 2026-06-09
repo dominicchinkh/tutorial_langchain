@@ -30,10 +30,24 @@ Expected Outcome:
 import asyncio
 
 from deepagents import create_deep_agent
+from langchain_core.tools import tool
 from langchain_quickjs import CodeInterpreterMiddleware
+
+# 1. Define a real tool that the agent can actually use
+@tool
+def search_web(query: str) -> str:
+    """Search the web for real-time information and facts."""
+    
+    # Mocking a response for the Golden Gate Bridge for demonstration
+    if "golden gate bridge" in query.lower():
+        return "The Golden Gate Bridge officially opened on May 27, 1937."
+    
+    return "No relevant search results found."
 
 agent = create_deep_agent(
     model="google_genai:gemini-2.5-flash-lite",
+    
+    tools=[search_web],
     
     # Interpreters give agents a programmable workspace where they can explore 
     # data, coordinate tool calls, and keep intermediate work out of the model 
@@ -46,6 +60,7 @@ agent = create_deep_agent(
     # model.
     
     middleware=[CodeInterpreterMiddleware(ptc=[
+        "search_web",
         "task"
     ])]
 )
@@ -56,7 +71,9 @@ async def get_number() -> int:
     result = await agent.ainvoke({
         "messages": [{
             "role": "user", 
-            "content": "Calculate the tenth Fibonacci number"
+            "content": 
+                "Find out what year the Golden Gate Bridge opened by searching the web." 
+                "Then, write a QuickJS script to calculate the 10th Fibonacci number and multiply it by that year."
         }]
     })
 
